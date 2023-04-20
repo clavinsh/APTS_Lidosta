@@ -4,6 +4,18 @@
 struct FlightTime {
     int minutesFrom;
     int minutesTo;
+
+    FlightTime() : minutesFrom(0), minutesTo(0) {}
+
+    FlightTime(int f, int t) : minutesFrom(f), minutesTo(t) {}
+
+    FlightTime& operator=(const FlightTime& other) {
+        if (this != &other) {
+            minutesFrom = other.minutesFrom;
+            minutesTo = other.minutesTo;
+        }
+        return *this;
+    }
 };
 
 class FlightTimeList {
@@ -11,13 +23,25 @@ private:
     struct Node {
         FlightTime data;
         Node* next;
+
+        Node() : next(nullptr) {}
+
+        Node(const Node& other) : data(other.data), next(nullptr) {}
+
+        Node& operator=(const Node& other) {
+            if (this != &other) {
+                data = other.data;
+                next = nullptr;
+            }
+            return *this;
+        }
     };
 
     Node* head;
     Node* tail;
 
 public:
-    FlightTimeList() { head = nullptr; tail = nullptr; }
+    FlightTimeList() : head(nullptr), tail(nullptr) {}
 
     ~FlightTimeList() {
         Node* current = head;
@@ -25,6 +49,14 @@ public:
             Node* nextNode = current->next;
             delete current;
             current = nextNode;
+        }
+    }
+
+    FlightTimeList(const FlightTimeList& other) : head(nullptr), tail(nullptr) {
+        Node* current = other.head;
+        while (current != nullptr) {
+            insertNode(current->data);
+            current = current->next;
         }
     }
 
@@ -46,13 +78,25 @@ public:
     bool empty() {
         return head == nullptr ? true : false;
     }
+
+    void printList() {
+        if (empty()) {
+            std::cout << std::endl;
+        }
+
+        Node* current = head;
+
+        while (current != nullptr) {
+            std::cout << current->data.minutesFrom << ' ' << current->data.minutesTo << ' ';
+            current = current->next;
+        }
+
+        std::cout << std::endl;
+    }
 };
 
 class Graph {
 private:
-
-
-
     FlightTimeList** adjacencyMatrix;
     int airportCount;
 public:
@@ -76,9 +120,23 @@ public:
             adjacencyMatrix[from][to] = FlightTimeList();
         }
         for (int i = 0; i < 2 * elementCount; i++) {
-            adjacencyMatrix[from][to].insertNode(FlightTime{ flightTimesArray[i], flightTimesArray[++i] });
+            int s = flightTimesArray[i];
+            int e = flightTimesArray[++i];
+
+            adjacencyMatrix[from][to].insertNode(FlightTime(s, e));
         }
     }
+
+    void printGraph() {
+        for (int i = 0; i < airportCount; i++) {
+            for (int j = 0; j < airportCount; j++) {
+                std::cout << i << ' ' << j << ":";
+                adjacencyMatrix[i][j].printList();
+            }
+        }
+    }
+
+    
 };
 
 int HHMM_to_total_minutes(char*& arr) {
@@ -135,10 +193,8 @@ int main() {
         for (int i = 0; i < n*2; i++) {
             flightTimes[i] = HHMM_to_total_minutes(ptr);
             ptr++;
-            std::cout << flightTimes[i] << ' ';
 
             flightTimes[++i] = HHMM_to_total_minutes(ptr);
-            std::cout << flightTimes[i] << std::endl;
             ptr++;
         }
 
@@ -151,6 +207,15 @@ int main() {
     }
 
     fin.close();
+
+
+    graph.printGraph();
+
+    int currentMoney = 1000;
+
+
+
+
 
     std::ofstream fout("lidostas.out");
 
