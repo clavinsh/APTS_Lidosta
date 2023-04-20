@@ -108,9 +108,13 @@ int main() {
     Graph graph = Graph(airportCount);
 
     char* HHMM = new char[6]; // HH:MM\n ir pavisam 6 simboli
+    char* ptr = HHMM;
+
     fin >> HHMM;
 
     arrivalTime = HHMM_to_total_minutes(HHMM);
+
+    delete[] (HHMM-5);
 
     int from;
     fin >> from;
@@ -124,18 +128,9 @@ int main() {
         char* buffer = new char[n * 12];
         fin.getline(buffer, static_cast<std::streamsize>(n) * 12);
 
-        char* ptr = buffer;
+        ptr = buffer;
 
-        int* flightTimes = nullptr;
-        try {
-            flightTimes = new int[n * 2];
-        }
-        catch (std::bad_alloc& e) {
-            // handle memory allocation error
-            delete[] HHMM;
-            delete[] buffer;
-            throw e;
-        }
+        int* flightTimes = new int[n * 2];
 
         for (int i = 0; i < n; i++) {
             flightTimes[i] = HHMM_to_total_minutes(ptr);
@@ -147,15 +142,13 @@ int main() {
             ptr++;
         }
 
-        graph.InsertVertex(from, to, n, flightTimes);
+        graph.InsertVertex(--from, --to, n, flightTimes);
 
         delete[] flightTimes;
         delete[] buffer;
 
         fin >> from;
     }
-
-    delete[] HHMM;
 
     fin.close();
 
