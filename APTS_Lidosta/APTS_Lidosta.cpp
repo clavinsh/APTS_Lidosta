@@ -14,9 +14,10 @@ private:
     };
 
     Node* head;
+    Node* tail;
 
 public:
-    FlightTimeList() { head = nullptr; }
+    FlightTimeList() { head = nullptr; tail = nullptr; }
 
     ~FlightTimeList() {
         Node* current = head;
@@ -34,13 +35,11 @@ public:
 
         if (head == nullptr) {
             head = newNode;
+            tail = head;
         }
         else {
-            Node* temp = head;
-            while (temp->next != nullptr) {
-                temp = temp->next;
-            }
-            temp->next = newNode;
+            tail->next = newNode;
+            tail = newNode;
         }
     }
 
@@ -72,7 +71,7 @@ public:
         delete[] adjacencyMatrix;
     }
 
-    void InsertEdge(int from, int to, int elementCount, int* flightTimesArray) {
+    void InsertVertex(int from, int to, int elementCount, int* flightTimesArray) {
         if (adjacencyMatrix[from][to].empty()) {
             adjacencyMatrix[from][to] = FlightTimeList();
         }
@@ -82,13 +81,15 @@ public:
     }
 };
 
-int HHMM_to_total_minutes(char* arr) {
-    int hours = (arr[0] - '0') * 10 + arr[1] - '0';
-    int minutes = (arr[3] - '0') * 10 + arr[4] - '0';
+int HHMM_to_total_minutes(char*& arr) {
+    int hours = (*arr++ - '0') * 10 + *arr - '0';
+    arr += 2;
+    int minutes = (*arr++ - '0') * 10 + *arr - '0';
 
     minutes += hours * 60;
     return minutes;
 }
+
 
 int main() {
     std::ifstream fin("lidostas.in");
@@ -101,19 +102,14 @@ int main() {
 
     startIndex--; goalIndex--;
 
-    //std::cout << airportCount << startIndex << goalIndex << std::endl;
-
     Graph graph = Graph(airportCount);
 
-    char HHMM[6]; // HH:MM\n ir pavisam 6 simboli
-
-
+    char* HHMM = new char[6]; // HH:MM\n ir pavisam 6 simboli
     fin >> HHMM;
 
     arrivalTime = HHMM_to_total_minutes(HHMM);
 
     int from;
-
     fin >> from;
 
     while (from != 0) {
@@ -121,9 +117,28 @@ int main() {
 
         fin >> to;
         fin >> n;
+        fin.get();
+        char* buffer = new char[n * 12];
+        fin.getline(buffer, static_cast<std::streamsize>(n) * 12);
 
+        char* ptr = buffer;
 
+        int* flightTimes = new int[n * 2];
 
+        for (int i = 0; i < n; i++) {
+            flightTimes[i] = HHMM_to_total_minutes(ptr);
+            ptr += 2;
+            std::cout << flightTimes[i] << ' ';
+
+            flightTimes[++i] = HHMM_to_total_minutes(ptr);
+            std::cout << flightTimes[i] << std::endl;
+        }
+
+        graph.InsertVertex(from, to, n, flightTimes);
+
+        delete[] flightTimes;
+
+        fin >> from;
     }
 
 
