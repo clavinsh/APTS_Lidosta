@@ -82,26 +82,17 @@ public:
 };
 
 int HHMM_to_total_minutes(char*& arr) {
-    //int hours = (*arr++ - '0') * 10 + (*arr++ - '0');
-    int hours = 0;
-    hours = (*arr++ - '0') * 10;
-    hours += *arr++ - '0';
+    int hours = (*arr++ - '0') * 10;
+    hours += (*arr++ - '0');
+    arr++; // skip the colon
 
-    if (*arr++ != ':') {
-        // handle input string format error
-        return -1;
-    }
+    int minutes = (*arr++ - '0') * 10;
+    minutes += (*arr++ - '0');
 
-    int minutes = 0;
-    minutes = (*arr++ - '0') * 10;
-    minutes += *arr - '0';
-
-
-    //int minutes = (*arr++ - '0') * 10 + (*arr - '0');
-
-    minutes += hours * 60;
-    return minutes;
+    int returnable = hours * 60 + minutes;
+    return returnable;
 }
+
 
 int main() {
     std::ifstream fin("lidostas.in");
@@ -148,12 +139,12 @@ int main() {
 
         for (int i = 0; i < n; i++) {
             flightTimes[i] = HHMM_to_total_minutes(ptr);
-            ptr += 2;
+            ptr++;
             std::cout << flightTimes[i] << ' ';
 
             flightTimes[++i] = HHMM_to_total_minutes(ptr);
             std::cout << flightTimes[i] << std::endl;
-            ptr += 2;
+            ptr++;
         }
 
         graph.InsertVertex(from, to, n, flightTimes);
