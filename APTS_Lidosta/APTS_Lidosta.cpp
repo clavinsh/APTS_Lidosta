@@ -1,11 +1,12 @@
 #include <fstream>
 #include <iostream>
+#include <chrono>
 
 struct FlightTime {
     int minutesFrom;
     int minutesTo;
 
-    FlightTime() : minutesFrom(0), minutesTo(0) {}
+    FlightTime() : minutesFrom(-1), minutesTo(-1) {}
 
     FlightTime(int f, int t) : minutesFrom(f), minutesTo(t) {}
 
@@ -16,7 +17,122 @@ struct FlightTime {
         }
         return *this;
     }
+
+    bool operator<(const FlightTime& other) const {
+        return minutesFrom < other.minutesFrom;
+    }
+
+    bool operator==(const FlightTime& other) const {
+        return (minutesFrom == other.minutesFrom && minutesTo == other.minutesTo);
+    }
 };
+
+class PriorityQueue {
+private:
+    struct Node {
+        FlightTime data;
+        Node* next;
+        Node() : next(nullptr) {}
+        //Node(const Node& other) : data(other.data), next(nullptr) {}
+        Node(const FlightTime& f) : data(f), next(nullptr) {}
+    };
+
+    Node* head;
+public:
+    PriorityQueue() : head(nullptr) {}
+
+    void push(const FlightTime& f) {
+        Node* newNode = new Node(f);
+
+        if(head == nullptr || f < head->data) {
+            newNode->next = head;
+            head = newNode;
+        }
+        else {
+            Node* curr = head;
+            while (curr->next != nullptr && curr->next->data < f) {
+                curr = curr->next;
+            }
+            newNode->next = curr->next;
+            curr->next = newNode;
+        }
+    }
+
+    FlightTime pop() {
+        FlightTime result = std::move(head->data);
+
+        Node* temp = head;
+        head = head->next;
+        delete temp;
+        return result;
+    }
+
+    FlightTime remove(const FlightTime& f) {
+        Node* curr = head;
+        Node* prev = nullptr;
+
+        FlightTime cpy = f;
+
+        while (curr != nullptr && !(curr->data == f)) {
+            prev = curr;
+            curr = curr->next;
+        }
+
+        // not found in queue
+        if (curr == nullptr) {
+            return f;
+        }
+
+
+        // is in the queue as the head or other
+        if (prev == nullptr) {
+            head = curr->next;
+        }
+        else {
+            prev->next = curr->next;
+        }
+
+        delete curr;
+
+        return cpy;
+    }
+
+    FlightTime top() {
+        return head != nullptr ? head->data : FlightTime();
+    }
+
+    bool empty() {
+        return head == nullptr;
+    }
+
+    int size() const {
+        int count = 0;
+        Node* curr = head;
+        while (curr != nullptr) {
+            count++;
+            curr = curr->next;
+        }
+
+        return count;
+    }
+
+    void printQueue() {
+        if (empty()) {
+            std::cout << std::endl;
+        }
+
+        Node* current = head;
+
+        while (current != nullptr) {
+            std::cout << current->data.minutesFrom << ' ' << current->data.minutesTo << ' ';
+            current = current->next;
+        }
+
+        std::cout << std::endl;
+    }
+
+};
+
 
 class FlightTimeList {
 private:
@@ -93,18 +209,38 @@ public:
 
         std::cout << std::endl;
     }
+
+    int earliestTime(int arrivalTime) {
+
+        //jaizveido prioritates rinda, kurai uz bridi pieliek so elementu, 
+        //un skatas kura pozicija vins ir, 
+        //un nem nakamo ka atrako, ja pozicija ir pedejais, tad pirmo elementu saraksta
+
+        int earliest = -1;
+
+        Node* current = head;
+
+        while (current != nullptr) {
+            if (current->data.minutesFrom < earliest && current->data.minutesFrom > arrivalTime) {
+                
+            }
+        }
+        
+
+
+    }
 };
 
 class Graph {
 private:
-    FlightTimeList** adjacencyMatrix;
+    PriorityQueue** adjacencyMatrix;
     int airportCount;
 public:
     Graph(int airportCount) {
         this->airportCount = airportCount;
-        adjacencyMatrix = new FlightTimeList *[airportCount];
+        adjacencyMatrix = new PriorityQueue *[airportCount];
         for (int i = 0; i < airportCount; i++) {
-            adjacencyMatrix[i] = new FlightTimeList[airportCount];
+            adjacencyMatrix[i] = new PriorityQueue[airportCount];
         }
     }
 
@@ -117,13 +253,13 @@ public:
 
     void InsertVertex(int from, int to, int elementCount, int* flightTimesArray) {
         if (adjacencyMatrix[from][to].empty()) {
-            adjacencyMatrix[from][to] = FlightTimeList();
+            adjacencyMatrix[from][to] = PriorityQueue();
         }
         for (int i = 0; i < 2 * elementCount; i++) {
             int s = flightTimesArray[i];
             int e = flightTimesArray[++i];
 
-            adjacencyMatrix[from][to].insertNode(FlightTime(s, e));
+            adjacencyMatrix[from][to].push(FlightTime(s, e));
         }
     }
 
@@ -131,12 +267,15 @@ public:
         for (int i = 0; i < airportCount; i++) {
             for (int j = 0; j < airportCount; j++) {
                 std::cout << i << ' ' << j << ":";
-                adjacencyMatrix[i][j].printList();
+                adjacencyMatrix[i][j].printQueue();
             }
         }
     }
 
-    
+
+    void FindPath(int from, int to, int arrivalTime) {
+
+    }
 };
 
 int HHMM_to_total_minutes(char*& arr) {
@@ -153,6 +292,7 @@ int HHMM_to_total_minutes(char*& arr) {
 
 
 int main() {
+    auto start_time = std::chrono::high_resolution_clock::now();
     std::ifstream fin("lidostas.in");
 
     int airportCount, startIndex, goalIndex, arrivalTime;
@@ -209,6 +349,15 @@ int main() {
     fin.close();
 
 
+    // Get the current time again
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    // Compute the elapsed time in microseconds
+    auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+
+    // Print the elapsed time
+    std::cout << "Elapsed time: " << elapsed_time.count() << " us\n";
+
     graph.printGraph();
 
     int currentMoney = 1000;
@@ -217,9 +366,16 @@ int main() {
 
 
 
+
+
+
+
     std::ofstream fout("lidostas.out");
 
     fout.close();
+
+
+
 
     return 0;
 }
