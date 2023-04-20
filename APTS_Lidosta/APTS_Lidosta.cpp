@@ -132,7 +132,7 @@ int main() {
 
         int* flightTimes = new int[n * 2];
 
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n*2; i++) {
             flightTimes[i] = HHMM_to_total_minutes(ptr);
             ptr++;
             std::cout << flightTimes[i] << ' ';
