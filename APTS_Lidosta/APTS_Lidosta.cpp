@@ -1,6 +1,4 @@
 #include <fstream>
-#include <iostream>
-#include <chrono>
 
 const int MINUTES_IN_A_DAY = 24 * 60;
 
@@ -132,21 +130,6 @@ public:
         return count;
     }
 
-    void printQueue() {
-        if (empty()) {
-            std::cout << std::endl;
-        }
-
-        Node* current = head;
-
-        while (current != nullptr) {
-            std::cout << current->data.minutesFrom << ' ' << current->data.minutesTo << ' ';
-            current = current->next;
-        }
-
-        std::cout << std::endl;
-    }
-
     bool IsLast(const FlightTime& f) {
 
         Node* curr = head;
@@ -184,22 +167,6 @@ public:
         return pair;
     }
 };
-
-char* minutesToHHMMFull(int minutesFrom, int minutesTo) {
-    int hoursFrom = minutesFrom / 60;
-    minutesFrom -= hoursFrom * 60;
-
-    int hoursTo = minutesTo / 60;
-    minutesTo -= hoursTo * 60;
-
-
-    char buffer[12];
-
-    snprintf(buffer, 12,"%02d:%02d-%02d:%02d",hoursFrom, minutesFrom, hoursTo, minutesTo);
-
-    return buffer;
-}
-
 
 struct Node {
     FlightTimeIndexPair data;
@@ -311,15 +278,6 @@ public:
         }
     }
 
-    void printGraph() {
-        for (int i = 0; i < airportCount; i++) {
-            for (int j = 0; j < airportCount; j++) {
-                std::cout << i+1 << ' ' << j+1 << ":";
-                adjacencyMatrix[i][j].printQueue();
-            }
-        }
-    }
-
     int FindPath(int from, int to, int arrivalTime, int& money, List*& path) {
         //if (money <= 0) return -1; // no more money for travel
 
@@ -371,19 +329,33 @@ int HHMM_to_total_minutes(char*& arr) {
     return returnable;
 }
 
+char* minutesToHHMMFull(int minutesFrom, int minutesTo) {
+    int hoursFrom = minutesFrom / 60;
+    minutesFrom -= hoursFrom * 60;
+
+    int hoursTo = minutesTo / 60;
+    minutesTo -= hoursTo * 60;
+
+
+    char* buffer = new char[12];
+
+    snprintf(buffer, 12, "%02d:%02d-%02d:%02d", hoursFrom, minutesFrom, hoursTo, minutesTo);
+
+    return buffer;
+}
+
 char* minutesToHHMM(int minutes) {
     int hours = minutes / 60;
     minutes -= hours * 60;
 
-    char buffer[6];
+    char* buffer = new char[6];
 
-    sprintf_s(buffer, "%d:%d", hours, minutes);
+    snprintf(buffer, 6, "%02d:%02d", hours, minutes);
 
     return buffer;
 }
 
 int main() {
-    auto start_time = std::chrono::high_resolution_clock::now();
     std::ifstream fin("lidostas.in");
 
     int airportCount, startIndex, goalIndex, arrivalTime;
@@ -439,7 +411,6 @@ int main() {
 
     fin.close();
 
-    graph.printGraph();
 
     int currentMoney = 1000;
 
@@ -456,7 +427,10 @@ int main() {
 
     Node* curr = path->getHead();
 
-    fout << from+1<< "->" << curr->data.index+1 << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+    fout << from + 1 << "->" << curr->data.index + 1 << ' ';
+
+    fout.write(minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo), 11);
+    fout << '\n';
 
     from = curr->data.index;
 
@@ -464,23 +438,13 @@ int main() {
 
     while (curr != nullptr) {
         fout << from+1 << "->" << curr->data.index+1 << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+
+
         from = curr->data.index;
         curr = curr->next;
     }
    
     fout.close();
-
-    // Get the current time again
-    auto end_time = std::chrono::high_resolution_clock::now();
-
-    // Compute the elapsed time in microseconds
-    auto elapsed_time = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-
-    // Print the elapsed time
-    std::cout << "Elapsed time: " << elapsed_time.count() << " us\n";
-
-
-
 
     return 0;
 }
