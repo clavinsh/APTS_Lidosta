@@ -157,8 +157,7 @@ public:
             pair = FlightTimeWaitPair{ tempNode->next->data, tempNode->next->data.minutesFrom - arrivalTime };
         }
         else {
-            remove(temp_t);
-            pair = FlightTimeWaitPair{ head->data, MINUTES_IN_A_DAY - head->data.minutesFrom + arrivalTime };
+            pair = FlightTimeWaitPair{ head->data, (MINUTES_IN_A_DAY - arrivalTime) + head->data.minutesFrom };
         }
 
 
@@ -420,7 +419,7 @@ int main() {
 
     if (graph.FindPath(startIndex, goalIndex, arrivalTime, currentMoney, path) == -1) {
         fout << "Impossible\n";
-        return -1;
+        return 0;
     }
 
     fout << from+1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
