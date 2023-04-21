@@ -168,16 +168,38 @@ public:
 
         Node* tempNode = push(temp_t);
 
+        FlightTimeWaitPair pair;
+
         if (!IsLast(temp_t)) {
-            return FlightTimeWaitPair{ tempNode->next->data, tempNode->next->data.minutesFrom - arrivalTime };
+            pair = FlightTimeWaitPair{ tempNode->next->data, tempNode->next->data.minutesFrom - arrivalTime };
         }
         else {
-            return FlightTimeWaitPair{ head->data, MINUTES_IN_A_DAY - head->data.minutesFrom + arrivalTime };
+            remove(temp_t);
+            pair = FlightTimeWaitPair{ head->data, MINUTES_IN_A_DAY - head->data.minutesFrom + arrivalTime };
         }
 
+
         remove(temp_t);
+
+        return pair;
     }
 };
+
+char* minutesToHHMMFull(int minutesFrom, int minutesTo) {
+    int hoursFrom = minutesFrom / 60;
+    minutesFrom -= hoursFrom * 60;
+
+    int hoursTo = minutesTo / 60;
+    minutesTo -= hoursTo * 60;
+
+
+    char buffer[12];
+
+    snprintf(buffer, 12,"%02d:%02d-%02d:%02d",hoursFrom, minutesFrom, hoursTo, minutesTo);
+
+    return buffer;
+}
+
 
 struct Node {
     FlightTimeIndexPair data;
@@ -292,22 +314,21 @@ public:
     void printGraph() {
         for (int i = 0; i < airportCount; i++) {
             for (int j = 0; j < airportCount; j++) {
-                std::cout << i << ' ' << j << ":";
+                std::cout << i+1 << ' ' << j+1 << ":";
                 adjacencyMatrix[i][j].printQueue();
             }
         }
     }
 
     int FindPath(int from, int to, int arrivalTime, int& money, List*& path) {
-        if (money <= 0) return -1; // no more money for travel
+        //if (money <= 0) return -1; // no more money for travel
 
-        //parbauda visus 'from' kaimiņus un dodas uz to ar visīsāko gaidīšanas laiku
         FlightTimeWaitPair earliestPair = { FlightTime(), MINUTES_IN_A_DAY + 1 };
         int nextAirportIndex = -1;
 
         for (int i = 0; i < airportCount; i++) {
             // atrasts kaimiņš
-            if (!adjacencyMatrix[from][i].empty()) {
+            if (from != i && !adjacencyMatrix[from][i].empty()) {
                 FlightTimeWaitPair pair = adjacencyMatrix[from][i].earliestFlight(arrivalTime);
                 if (earliestPair.waitTime > pair.waitTime) {
                     earliestPair = pair;
@@ -323,6 +344,10 @@ public:
             path->insertNode(FlightTimeIndexPair{ earliestPair.ft, nextAirportIndex});
 
             adjacencyMatrix[from][nextAirportIndex].remove(earliestPair.ft);
+
+            if (nextAirportIndex == to) {
+                return 1;
+            }
 
             return FindPath(nextAirportIndex, to, earliestPair.ft.minutesTo, money, path);
 
@@ -357,22 +382,6 @@ char* minutesToHHMM(int minutes) {
     return buffer;
 }
 
-char* minutesToHHMMFull(int minutesFrom, int minutesTo) {
-    int hoursFrom = minutesFrom / 60;
-    minutesFrom -= hoursFrom * 60;
-
-    int hoursTo = minutesTo / 60;
-    minutesTo -= hoursTo * 60;
-
-
-    char buffer[12];
-
-    sprintf_s(buffer, "%d:%d-%d:%d", hoursFrom, minutesFrom, hoursTo, minutesTo);
-
-    return buffer;
-}
-
-
 int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
     std::ifstream fin("lidostas.in");
@@ -397,11 +406,10 @@ int main() {
     delete[](HHMM - 5);
 
     int from;
-    int to = -1;
     fin >> from;
 
     while (from != 0) {
-        int n;
+        int n, to;
 
         fin >> to;
         fin >> n;
@@ -431,7 +439,7 @@ int main() {
 
     fin.close();
 
-    //graph.printGraph();
+    graph.printGraph();
 
     int currentMoney = 1000;
 
@@ -439,24 +447,25 @@ int main() {
 
     std::ofstream fout("lidostas.out");
 
-    if (graph.FindPath(from, to, arrivalTime, currentMoney, path) == -1) {
+    if (graph.FindPath(startIndex, goalIndex, arrivalTime, currentMoney, path) == -1) {
         fout << "Impossible\n";
         return -1;
     }
 
-    fout << from << ' ' << minutesToHHMM(arrivalTime) << '\n';
+    fout << from+1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
 
     Node* curr = path->getHead();
-    fout << from << "->" << curr->data.index << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+
+    fout << from+1<< "->" << curr->data.index+1 << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
 
     from = curr->data.index;
-    path->pop();
+
+    curr = curr->next;
 
     while (curr != nullptr) {
-        fout << from << "->" << curr->data.index << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+        fout << from+1 << "->" << curr->data.index+1 << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
         from = curr->data.index;
-        path->pop();
-        curr = path->getHead();
+        curr = curr->next;
     }
    
     fout.close();
