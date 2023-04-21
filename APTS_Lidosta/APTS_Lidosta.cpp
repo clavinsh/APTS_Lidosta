@@ -56,7 +56,7 @@ public:
     Node* push(const FlightTime& f) {
         Node* newNode = new Node(f);
 
-        if(head == nullptr || f < head->data) {
+        if (head == nullptr || f < head->data) {
             newNode->next = head;
             head = newNode;
         }
@@ -145,7 +145,7 @@ public:
 
 
     FlightTimeWaitPair earliestFlight(int arrivalTime) {
-        if (empty()) return FlightTimeWaitPair{FlightTime(), -1};
+        if (empty()) return FlightTimeWaitPair{ FlightTime(), -1 };
 
         FlightTime temp_t = FlightTime(arrivalTime, 0);
 
@@ -252,7 +252,7 @@ private:
 public:
     Graph(int airportCount) {
         this->airportCount = airportCount;
-        adjacencyMatrix = new PriorityQueue *[airportCount];
+        adjacencyMatrix = new PriorityQueue * [airportCount];
         for (int i = 0; i < airportCount; i++) {
             adjacencyMatrix[i] = new PriorityQueue[airportCount];
         }
@@ -298,7 +298,7 @@ public:
             // save the chosen airport index and the flight, 
             money = money - (earliestPair.waitTime);
 
-            path->insertNode(FlightTimeIndexPair{ earliestPair.ft, nextAirportIndex});
+            path->insertNode(FlightTimeIndexPair{ earliestPair.ft, nextAirportIndex });
 
             adjacencyMatrix[from][nextAirportIndex].remove(earliestPair.ft);
 
@@ -392,7 +392,7 @@ int main() {
 
         int* flightTimes = new int[n * 2];
 
-        for (int i = 0; i < n*2; i++) {
+        for (int i = 0; i < n * 2; i++) {
             flightTimes[i] = HHMM_to_total_minutes(ptr);
             ptr++;
 
@@ -422,11 +422,11 @@ int main() {
         return 0;
     }
 
-    fout << from+1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
+    fout << startIndex + 1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
 
     Node* curr = path->getHead();
 
-    fout << from + 1 << "->" << curr->data.index + 1 << ' ';
+    fout << startIndex + 1 << "->" << curr->data.index + 1 << ' ';
 
     fout.write(minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo), 11);
     fout << '\n';
@@ -436,13 +436,13 @@ int main() {
     curr = curr->next;
 
     while (curr != nullptr) {
-        fout << from+1 << "->" << curr->data.index+1 << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+        fout << from + 1 << "->" << curr->data.index + 1 << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
 
 
         from = curr->data.index;
         curr = curr->next;
     }
-   
+
     fout.close();
 
     return 0;
