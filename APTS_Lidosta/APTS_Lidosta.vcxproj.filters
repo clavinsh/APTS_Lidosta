@@ -23,5 +23,8 @@
     <None Include="lidostas.in">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="lidostas.out">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

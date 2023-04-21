@@ -2,6 +2,8 @@
 #include <iostream>
 #include <chrono>
 
+const int MINUTES_IN_A_DAY = 24 * 60;
+
 struct FlightTime {
     int minutesFrom;
     int minutesTo;
@@ -27,6 +29,18 @@ struct FlightTime {
     }
 };
 
+
+struct FlightTimeWaitPair {
+    FlightTime ft;
+    int waitTime;
+};
+
+struct FlightTimeIndexPair {
+    FlightTime ft;
+    int index;
+    //FlightTimeIndexPair() : ft(FlightTime()), index(-1) {}
+};
+
 class PriorityQueue {
 private:
     struct Node {
@@ -41,7 +55,7 @@ private:
 public:
     PriorityQueue() : head(nullptr) {}
 
-    void push(const FlightTime& f) {
+    Node* push(const FlightTime& f) {
         Node* newNode = new Node(f);
 
         if(head == nullptr || f < head->data) {
@@ -56,6 +70,8 @@ public:
             newNode->next = curr->next;
             curr->next = newNode;
         }
+
+        return newNode;
     }
 
     FlightTime pop() {
@@ -131,13 +147,43 @@ public:
         std::cout << std::endl;
     }
 
+    bool IsLast(const FlightTime& f) {
+
+        Node* curr = head;
+
+        if (curr == nullptr) return false;
+
+        while (curr->next != nullptr) {
+            curr = curr->next;
+        }
+
+        return (curr->data.minutesFrom == f.minutesFrom);
+    }
+
+
+    FlightTimeWaitPair earliestFlight(int arrivalTime) {
+        if (empty()) return FlightTimeWaitPair{FlightTime(), -1};
+
+        FlightTime temp_t = FlightTime(arrivalTime, 0);
+
+        Node* tempNode = push(temp_t);
+
+        if (!IsLast(temp_t)) {
+            return FlightTimeWaitPair{ tempNode->next->data, tempNode->next->data.minutesFrom - arrivalTime };
+        }
+        else {
+            return FlightTimeWaitPair{ head->data, MINUTES_IN_A_DAY - head->data.minutesFrom + arrivalTime };
+        }
+
+        remove(temp_t);
+    }
 };
 
 
-class FlightTimeList {
+class List {
 private:
     struct Node {
-        FlightTime data;
+        FlightTimeIndexPair data;
         Node* next;
 
         Node() : next(nullptr) {}
@@ -157,9 +203,9 @@ private:
     Node* tail;
 
 public:
-    FlightTimeList() : head(nullptr), tail(nullptr) {}
+    List() : head(nullptr), tail(nullptr) {}
 
-    ~FlightTimeList() {
+    ~List() {
         Node* current = head;
         while (current != nullptr) {
             Node* nextNode = current->next;
@@ -168,7 +214,7 @@ public:
         }
     }
 
-    FlightTimeList(const FlightTimeList& other) : head(nullptr), tail(nullptr) {
+    List(const List& other) : head(nullptr), tail(nullptr) {
         Node* current = other.head;
         while (current != nullptr) {
             insertNode(current->data);
@@ -176,7 +222,7 @@ public:
         }
     }
 
-    void insertNode(FlightTime data) {
+    void insertNode(FlightTimeIndexPair data) {
         Node* newNode = new Node;
         newNode->data = data;
         newNode->next = nullptr;
@@ -193,41 +239,6 @@ public:
 
     bool empty() {
         return head == nullptr ? true : false;
-    }
-
-    void printList() {
-        if (empty()) {
-            std::cout << std::endl;
-        }
-
-        Node* current = head;
-
-        while (current != nullptr) {
-            std::cout << current->data.minutesFrom << ' ' << current->data.minutesTo << ' ';
-            current = current->next;
-        }
-
-        std::cout << std::endl;
-    }
-
-    int earliestTime(int arrivalTime) {
-
-        //jaizveido prioritates rinda, kurai uz bridi pieliek so elementu, 
-        //un skatas kura pozicija vins ir, 
-        //un nem nakamo ka atrako, ja pozicija ir pedejais, tad pirmo elementu saraksta
-
-        int earliest = -1;
-
-        Node* current = head;
-
-        while (current != nullptr) {
-            if (current->data.minutesFrom < earliest && current->data.minutesFrom > arrivalTime) {
-                
-            }
-        }
-        
-
-
     }
 };
 
@@ -272,9 +283,36 @@ public:
         }
     }
 
+    int FindPath(int from, int to, int arrivalTime, int& money, List*& path) {
+        if (money <= 0) return -1; // no more money for travel
 
-    void FindPath(int from, int to, int arrivalTime) {
+        //parbauda visus 'from' kaimiņus un dodas uz to ar visīsāko gaidīšanas laiku
+        FlightTimeWaitPair earliestPair = { FlightTime(), MINUTES_IN_A_DAY + 1 };
+        int nextAirportIndex = -1;
 
+        for (int i = 0; i < airportCount; i++) {
+            // atrasts kaimiņš
+            if (!adjacencyMatrix[from][i].empty()) {
+                FlightTimeWaitPair pair = adjacencyMatrix[from][i].earliestFlight(arrivalTime);
+                if (earliestPair.waitTime > pair.waitTime) {
+                    earliestPair = pair;
+                    nextAirportIndex = i;
+                }
+            }
+        }
+
+        if (nextAirportIndex != -1) {
+            // save the chosen airport index and the flight, 
+            money = money - (earliestPair.waitTime + earliestPair.ft.minutesTo - earliestPair.ft.minutesFrom);
+            path->insertNode(FlightTimeIndexPair{ earliestPair.ft, nextAirportIndex});
+
+            return FindPath(nextAirportIndex, to, earliestPair.ft.minutesTo, money, path);
+
+        }
+        else {
+            // path does not exist
+            return -1;
+        }
     }
 };
 
@@ -288,6 +326,32 @@ int HHMM_to_total_minutes(char*& arr) {
 
     int returnable = hours * 60 + minutes;
     return returnable;
+}
+
+char* minutesToHHMM(int minutes) {
+    int hours = minutes / 60;
+    minutes -= hours * 60;
+
+    char buffer[6];
+
+    sprintf_s(buffer, "%d:%d", hours, minutes);
+
+    return buffer;
+}
+
+char* minutesToHHMMFull(int minutesFrom, int minutesTo) {
+    int hoursFrom = minutesFrom / 60;
+    minutesFrom -= hoursFrom * 60;
+
+    int hoursTo = minutesTo / 60;
+    minutesTo -= hoursTo * 60;
+
+
+    char buffer[12];
+
+    sprintf_s(buffer, "%d:%d-%d:%d", hoursFrom, minutesFrom, hoursTo, minutesTo);
+
+    return buffer;
 }
 
 
@@ -312,13 +376,14 @@ int main() {
 
     arrivalTime = HHMM_to_total_minutes(HHMM);
 
-    delete[] (HHMM-5);
+    delete[](HHMM - 5);
 
     int from;
+    int to = -1;
     fin >> from;
 
     while (from != 0) {
-        int to, n;
+        int n;
 
         fin >> to;
         fin >> n;
@@ -348,6 +413,23 @@ int main() {
 
     fin.close();
 
+    //graph.printGraph();
+
+    int currentMoney = 1000;
+
+    List* path = new List();
+
+    std::ofstream fout("lidostas.out");
+
+    if (graph.FindPath(from, to, arrivalTime, currentMoney, path) == -1) {
+        fout << "Impossible\n";
+        return -1;
+    }
+
+    fout << from << ' ' << minutesToHHMM(arrivalTime) << '\n';
+    
+
+    fout.close();
 
     // Get the current time again
     auto end_time = std::chrono::high_resolution_clock::now();
@@ -357,22 +439,6 @@ int main() {
 
     // Print the elapsed time
     std::cout << "Elapsed time: " << elapsed_time.count() << " us\n";
-
-    graph.printGraph();
-
-    int currentMoney = 1000;
-
-
-
-
-
-
-
-
-
-    std::ofstream fout("lidostas.out");
-
-    fout.close();
 
 
 
