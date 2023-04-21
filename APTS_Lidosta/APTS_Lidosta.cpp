@@ -416,11 +416,11 @@ int main() {
         return 0;
     }
 
-    fout << startIndex+1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
+    fout << from+1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
 
     Node* curr = path->getHead();
 
-    fout << startIndex + 1 << "->" << curr->data.index + 1 << ' ';
+    fout << from + 1 << "->" << curr->data.index + 1 << ' ';
 
     fout.write(minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo), 11);
     fout << '\n';
