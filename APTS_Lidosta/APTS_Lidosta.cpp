@@ -179,26 +179,25 @@ public:
     }
 };
 
+struct Node {
+    FlightTimeIndexPair data;
+    Node* next;
+
+    Node() : next(nullptr) {}
+
+    Node(const Node& other) : data(other.data), next(nullptr) {}
+
+    Node& operator=(const Node& other) {
+        if (this != &other) {
+            data = other.data;
+            next = nullptr;
+        }
+        return *this;
+    }
+};
 
 class List {
 private:
-    struct Node {
-        FlightTimeIndexPair data;
-        Node* next;
-
-        Node() : next(nullptr) {}
-
-        Node(const Node& other) : data(other.data), next(nullptr) {}
-
-        Node& operator=(const Node& other) {
-            if (this != &other) {
-                data = other.data;
-                next = nullptr;
-            }
-            return *this;
-        }
-    };
-
     Node* head;
     Node* tail;
 
@@ -235,6 +234,22 @@ public:
             tail->next = newNode;
             tail = newNode;
         }
+    }
+
+    void pop() {
+        if (head == nullptr) {
+            return;
+        }
+        Node* tmp = head;
+        head = head->next;
+        delete tmp;
+        if (head == nullptr) {
+            tail = nullptr;
+        }
+    }
+
+    Node* getHead() {
+        return head;
     }
 
     bool empty() {
@@ -303,8 +318,11 @@ public:
 
         if (nextAirportIndex != -1) {
             // save the chosen airport index and the flight, 
-            money = money - (earliestPair.waitTime + earliestPair.ft.minutesTo - earliestPair.ft.minutesFrom);
+            money = money - (earliestPair.waitTime);
+
             path->insertNode(FlightTimeIndexPair{ earliestPair.ft, nextAirportIndex});
+
+            adjacencyMatrix[from][nextAirportIndex].remove(earliestPair.ft);
 
             return FindPath(nextAirportIndex, to, earliestPair.ft.minutesTo, money, path);
 
@@ -427,8 +445,20 @@ int main() {
     }
 
     fout << from << ' ' << minutesToHHMM(arrivalTime) << '\n';
-    
 
+    Node* curr = path->getHead();
+    fout << from << "->" << curr->data.index << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+
+    from = curr->data.index;
+    path->pop();
+
+    while (curr != nullptr) {
+        fout << from << "->" << curr->data.index << ' ' << minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo) << '\n';
+        from = curr->data.index;
+        path->pop();
+        curr = path->getHead();
+    }
+   
     fout.close();
 
     // Get the current time again
