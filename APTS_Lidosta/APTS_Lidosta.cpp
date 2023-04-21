@@ -277,9 +277,7 @@ public:
         }
     }
 
-    int FindPath(int from, int to, int arrivalTime, int& money, List*& path) {
-        //if (money <= 0) return -1; // no more money for travel
-
+    int FindPath(int from, int to, int arrivalTime, List*& path) {
         FlightTimeWaitPair earliestPair = { FlightTime(), MINUTES_IN_A_DAY + 1 };
         int nextAirportIndex = -1;
 
@@ -306,7 +304,7 @@ public:
                 return 1;
             }
 
-            return FindPath(nextAirportIndex, to, earliestPair.ft.minutesTo, money, path);
+            return FindPath(nextAirportIndex, to, earliestPair.ft.minutesTo, path);
 
         }
         else {
@@ -355,7 +353,8 @@ char* minutesToHHMM(int minutes) {
 }
 
 int main() {
-    std::ifstream fin("lidostas.in");
+    //‪C:\Users\hazya\Downloads\lidostas.i2
+    std::ifstream fin("C:/Users/hazya/Downloads/lidostas.i2");
 
     int airportCount, startIndex, goalIndex, arrivalTime;
 
@@ -410,23 +409,20 @@ int main() {
 
     fin.close();
 
-
-    int currentMoney = 1000;
-
     List* path = new List();
 
     std::ofstream fout("lidostas.out");
 
-    if (graph.FindPath(startIndex, goalIndex, arrivalTime, currentMoney, path) == -1) {
+    if (graph.FindPath(startIndex, goalIndex, arrivalTime, path) == -1) {
         fout << "Impossible\n";
         return 0;
     }
 
-    fout << startIndex + 1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
+    fout << startIndex+1 << ' ' << minutesToHHMM(arrivalTime) << '\n';
 
     Node* curr = path->getHead();
 
-    fout << startIndex + 1 << "->" << curr->data.index + 1 << ' ';
+    fout << from + 1 << "->" << curr->data.index + 1 << ' ';
 
     fout.write(minutesToHHMMFull(curr->data.ft.minutesFrom, curr->data.ft.minutesTo), 11);
     fout << '\n';
